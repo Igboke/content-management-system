@@ -1,7 +1,7 @@
 from django import forms
 from django.contrib.auth.forms import UserChangeForm 
 from django.core.exceptions import ValidationError # Import for validation
-from .models import CustomUser # Import your custom user model
+from .models import CustomUser # Import custom user model
 
 
 class CustomUserCreationForm(forms.ModelForm): # Inherit from forms.ModelForm
