@@ -9,6 +9,13 @@ def article_picture_upload_path(instance, filename):
     return os.path.join('article_pictures', instance.slug or str(instance.id), filename)
 
 
+ARTICLE_STATUS_CHOICES = [
+    ('draft', ('Draft')),
+    ('published', ('Published')),
+    ('archived', ('Archived')),
+    ('review', ('Under Review')),
+]
+
 class Article(models.Model):
     """
     Model representing an article with fields for title, author, content,
@@ -36,6 +43,15 @@ class Article(models.Model):
     )
 
     content = models.TextField(help_text="Enter the article content")
+
+    # draft vs online
+    is_published = models.CharField(
+        max_length=20,
+        choices=ARTICLE_STATUS_CHOICES, # Use the defined choices
+        default='draft', 
+        db_index=True, # Added a database index for faster filtering by status
+        help_text=("The publication status of the article.")
+    )
 
     # Use auto_now_add for creation timestamp (only set on creation)
     created_at = models.DateTimeField(
@@ -70,7 +86,7 @@ class Article(models.Model):
         # A good __str__ method returning the title
         return self.title
 
-    # --- Add logic to auto-populate the slug ---
+    # Add logic to auto-populate the slug
     def save(self, *args, **kwargs):
         if not self.slug: # If slug is empty or None
             # Generate slug from the title
