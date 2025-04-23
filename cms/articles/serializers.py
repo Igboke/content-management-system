@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from .models import Article, Comment
 from django.contrib.auth import get_user_model
-from users.serializers import CustomUserSerializer
+from users.serializers import CustomUserSerializer, CustomUserSearchSerializer
 
 
 class CommentSerializers(serializers.ModelSerializer):
@@ -27,3 +27,10 @@ class ArticlesSerializers(serializers.ModelSerializer):
 
         # Define fields that should be read-only (included in output, ignored on input)
         read_only_fields = ('id', 'slug', 'author', 'created_at', 'updated_at')
+
+class ArticlesSearchSerializer(serializers.ModelSerializer):
+    author = CustomUserSearchSerializer()
+    class Meta:
+        model = Article
+
+        fields = ('title', 'slug', 'author', 'content', 'created_at')
