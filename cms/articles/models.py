@@ -15,6 +15,11 @@ ARTICLE_STATUS_CHOICES = [
     ('archived', ('Archived')),
     ('review', ('Under Review')),
 ]
+COMMENT_STATUS_CHOICES = [
+    ('approved', ('Approved')),
+    ('pending', ('Pending')),
+    ('rejected', ('Rejected')),
+]
 
 class Article(models.Model):
     """
@@ -100,3 +105,32 @@ class Article(models.Model):
             self.slug = slug # Assign the generated unique slug
 
         super().save(*args, **kwargs) # Call the real save method
+
+class Comment(models.Model):
+    """
+    Model representing a comment on an article.
+    """
+    article = models.ForeignKey(
+        Article,
+        on_delete=models.CASCADE,
+        related_name='comments', # Allows calling article.comments.all()
+        help_text="Select the article for this comment"
+    )
+    author = models.ForeignKey(
+        get_user_model(),
+        on_delete=models.CASCADE,
+        related_name='user_comments', # Allows calling user.comments.all()
+        help_text="Select the author of the comment"
+    )
+    content = models.TextField(help_text="Enter the comment content")
+    created_at = models.DateTimeField(auto_now_add=True, help_text="Date and time when the comment was created")
+    updated_at = models.DateTimeField(auto_now=True, help_text="Date and time when the comment was last updated")
+    status = models.CharField(max_length=20, choices=COMMENT_STATUS_CHOICES, default='pending')
+    
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name = "Comment"
+        verbose_name_plural = "Comments"
+
+    def __str__(self):
+        return f"Comment by {self.author} on {self.article}"
