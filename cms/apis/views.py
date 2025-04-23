@@ -4,8 +4,8 @@ from django.shortcuts import render, get_object_or_404
 from django.db.models import Q
 from django.utils import timezone
 from articles.models import Article, Comment
-from articles.serializers import ArticlesSerializers, CommentSerializers
-from users.serializers import CustomUserSerializer
+from articles.serializers import ArticlesSerializers, CommentSerializers, ArticlesSearchSerializer
+from users.serializers import CustomUserSerializer, UserRegistrationSerializer
 from django.contrib.auth import get_user_model
 
 CustomUser = get_user_model()
@@ -113,3 +113,64 @@ class CommentRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView)
     # Permissions: Authenticated users can read, author can update/delete
     permission_classes = [permissions.IsAuthenticatedOrReadOnly, IsAuthorOrReadOnly]
 
+# user/create
+class UserRegistrationAPIView(generics.CreateAPIView):
+    """
+    API view for user registration.
+    """
+    queryset = CustomUser.objects.all() # Needs a queryset though CreateAPIView doesn't query it
+    serializer_class = UserRegistrationSerializer
+    permission_classes = [permissions.AllowAny] # Allow anyone to register
+
+    def perform_create(self, serializer):
+        # The create method of the serializer handles user creation with password hashing
+        serializer.save()
+
+# articles/search/?q=keyword
+class ArticleSearchView(generics.ListAPIView):
+    """
+    API view for searching published articles by title.
+    """
+    serializer_class = ArticlesSerializers
+    # Allow unauthenticated users to search published articles
+    permission_classes = [permissions.AllowAny] 
+
+    def get_queryset(self):
+        """
+        Filter published articles based on a search query parameter 'q'.
+        """
+        queryset = Article.objects.filter(
+            is_published='published',
+            created_at__lte=timezone.now()
+        )
+        query = self.request.query_params.get('q', None) # Get the 'q' query parameter
+
+        if query:
+            # Filter articles where the title contains the query keyword (case-insensitive)
+            # Using Q object for potentially more complex lookups later
+            queryset = queryset.filter(Q(title__icontains=query))
+
+        # Add default ordering
+        queryset = queryset.order_by('-created_at')
+
+        return queryset
+    
+class ArticleSearchViewPro(generics.ListAPIView):
+    """
+    API view for searching published articles by mail.
+    """
+    serializer_class = ArticlesSearchSerializer
+    permission_classes = [permissions.AllowAny] 
+
+    def get_queryset(self):
+        """
+        Filter published articles based on a mail.
+        """
+        email = self.kwargs.get('name')
+        User = get_object_or_404(
+            get_user_model(),
+            email = email
+        )
+
+        return User.articles.filter(is_published='published')
+    
