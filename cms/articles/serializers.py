@@ -23,7 +23,7 @@ class ArticlesSerializers(serializers.ModelSerializer):
         model = Article
 
         # Define fields for output (GET requests)
-        fields = ('id', 'title', 'slug', 'author', 'content', 'created_at', 'updated_at', 'picture', 'status', 'publication_date')
+        fields = ('id', 'title', 'slug', 'author', 'content', 'created_at', 'updated_at', 'picture', 'is_published','comment')
 
         # Define fields that should be read-only (included in output, ignored on input)
         read_only_fields = ('id', 'slug', 'author', 'created_at', 'updated_at')
