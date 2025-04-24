@@ -7,6 +7,7 @@ from articles.models import Article, Comment
 from articles.serializers import ArticlesSerializers, CommentSerializers, ArticlesSearchSerializer
 from users.serializers import CustomUserSerializer, UserRegistrationSerializer
 from django.contrib.auth import get_user_model
+from django.http import Http404
 
 CustomUser = get_user_model()
 
@@ -58,6 +59,16 @@ class ArticleViewSet(viewsets.ModelViewSet):
             raise PermissionDenied("You must be authenticated to create an Article")
         
         serializer.save(author=self.request.user)
+
+    def get_object(self):
+        obj = super().get_object()
+
+        if obj.is_published != 'published':
+            user = self.request.user
+            if not user.is_authenticated or (obj.author != user and not user.is_staff):
+                raise Http404()
+
+        return obj
     
 
 # URL pattern: /articles/<slug:slug>/comments/
@@ -166,7 +177,7 @@ class ArticleSearchViewPro(generics.ListAPIView):
         """
         Filter published articles based on a mail.
         """
-        email = self.kwargs.get('name')
+        email = self.kwargs.get('email')
         User = get_object_or_404(
             get_user_model(),
             email = email
