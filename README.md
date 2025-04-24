@@ -1,8 +1,6 @@
-# Content Management System
+# 📘 Content Management System API
 
-## Description
-
-This project is a **Content Management System (CMS)** designed to help users create, manage, and modify digital content with ease. It provides a user-friendly interface and powerful tools for organizing and publishing content.
+This is a RESTful API for a Content Management System (CMS), built to manage articles and their associated comments, with user registration and authentication.
 
 ## Features
 
@@ -32,21 +30,175 @@ This project is a **Content Management System (CMS)** designed to help users cre
     SECRET_KEY=your-secret-key
     ```
 5. Run the application:
+    navigate to directory housing manage.py file
     ```bash
-    
+    python manage.py runserver
     ```
 
-## Usage
+## 📚 Endpoints
 
-1. Open your browser and navigate to `http://localhost:8000`.
-2. Register or log in to access the CMS dashboard.
-3. Start creating and managing your content!
+### 📝 Articles
+
+- **List Articles**  
+  `GET /articles/`  
+  Returns all published articles.  
+  🔒 Requires Authentication  
+
+- **Create Article**  
+  `POST /articles/`  
+  Create a new article.  
+  🔒 Requires Authentication  
+
+- **Retrieve Article**  
+  `GET /articles/{slug}/`  
+  Get details of a specific article.  
+  🔒 Requires Authentication  
+
+- **Update Article**  
+  `PUT /articles/{slug}/`  
+  Update all fields of a specific article.  
+  🔒 Requires Authentication  
+
+- **Partial Update Article**  
+  `PATCH /articles/{slug}/`  
+  Update some fields of an article.  
+  🔒 Requires Authentication  
+
+- **Delete Article**  
+  `DELETE /articles/{slug}/`  
+  Delete a specific article.  
+  🔒 Requires Authentication  
+
+- **Search Articles by Title**  
+  `GET /articles/search/`  
+  🔒 Requires Authentication  
+
+- **Search Articles by Author's Name**  
+  `GET /articles/search/{name}/`  
+  🔒 Requires Authentication  
+
+---
+
+### 💬 Comments
+
+- **List Comments for an Article**  
+  `GET /articles/{slug}/comments/`  
+  🔒 Requires Authentication  
+
+- **Create Comment on an Article**  
+  `POST /articles/{slug}/comments/`  
+  🔒 Requires Authentication  
+
+- **Retrieve Specific Comment**  
+  `GET /articles/{slug}/comments/{id}/`  
+  🔒 Requires Authentication  
+
+- **Update Comment**  
+  `PUT /articles/{slug}/comments/{id}/`  
+  🔒 Requires Authentication  
+
+- **Partial Update Comment**  
+  `PATCH /articles/{slug}/comments/{id}/`  
+  🔒 Requires Authentication  
+
+- **Delete Comment**  
+  `DELETE /articles/{slug}/comments/{id}/`  
+  🔒 Requires Authentication  
+
+---
+
+### 🔐 Auth & Users
+
+- **Token Authentication**  
+  `POST /auth/token/`  
+  Request:
+  ```json
+  {
+    "username": "your_username",
+    "password": "your_password"
+  }
+  ```  
+  🔒 Requires Authentication  
+
+- **User Registration**  
+  `POST /user/create/`
+
+---
+
+## 🧱 Schema: Article (`ArticlesSerializers`)
+
+```json
+{
+  "id": "integer",
+  "title": "string",
+  "slug": "string (read-only)",
+  "author": {
+    "id": "integer",
+    "username": "string",
+    "email": "email",
+    "first_name": "string",
+    "last_name": "string",
+    "other_name": "string or null",
+    "occupation": "string or null",
+    "bio": "string or null",
+    "profile_picture": "uri or null"
+  },
+  "content": "string",
+  "created_at": "datetime",
+  "updated_at": "datetime",
+  "picture": "uri (optional)",
+  "is_published": "draft | published | archived | review",
+  "comment": [/* list of comment objects */]
+}
+```
+
+---
+
+## 💬 Schema: Comment (`CommentSerializers`)
+
+```json
+{
+  "id": "integer",
+  "author": {
+    "id": "integer",
+    "username": "string",
+    "email": "email"
+  },
+  "content": "string",
+  "created_at": "datetime",
+  "updated_at": "datetime"
+}
+```
+
+---
+
+## 👤 Schema: User (`CustomUser`)
+
+```json
+{
+  "id": "integer",
+  "username": "string",
+  "email": "string",
+  "first_name": "string",
+  "last_name": "string",
+  "other_name": "string or null",
+  "occupation": "string or null",
+  "bio": "string or null",
+  "profile_picture": "uri or null"
+}
+```
+
+
+## 🧪 Swagger UI
+
+Append `api/schema/redoc` or `/api/schema/swagger-ui/` to your base URL to view interactive API documentation via Swagger UI.
+
 
 ## Technologies Used
 
 - **Backend**: django
 - **Database**: SQLite3
-- **Authentication**: 
+- **Authentication**: restframework authentication token
 
 ## Contributing
 
@@ -55,15 +207,15 @@ Contributions are welcome! Please follow these steps:
 1. Fork the repository.
 2. Create a new branch:
     ```bash
-    git checkout -b feature-name
+    git checkout -b new-feature
     ```
 3. Commit your changes:
     ```bash
-    git commit -m "Add feature-name"
+    git commit -m "Add new feature"
     ```
 4. Push to your branch:
     ```bash
-    git push origin feature-name
+    git push origin new-feature
     ```
 5. Open a pull request.
 
