@@ -106,6 +106,10 @@ class Article(models.Model):
 
         super().save(*args, **kwargs) # Call the real save method
 
+    @property
+    def is_published_(self):
+        return self.is_published == 'published'
+
 class Comment(models.Model):
     """
     Model representing a comment on an article.
