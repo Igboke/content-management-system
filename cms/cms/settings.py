@@ -48,7 +48,8 @@ INSTALLED_APPS = [
     'articles.apps.ArticlesConfig',
     'apis.apps.ApisConfig',
     'rest_framework',
-    'drf_spectacular'
+    'drf_spectacular',
+    'rest_framework.authtoken'
 ]
 
 MIDDLEWARE = [
@@ -84,6 +85,10 @@ WSGI_APPLICATION = 'cms.wsgi.application'
 REST_FRAMEWORK = {
     #OTHER DRF SETTINGS GO HERE
     'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
+    'DEFAULT_AUTHENTICATION_CLASSES':[
+        'rest_framework.authentication.TokenAuthentication',
+        'rest_framework.authentication.SessionAuthentication'            
+        ]
 }
 
 SPECTACULAR_SETTINGS = {
@@ -140,6 +145,9 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.1/howto/static-files/
 
 STATIC_URL = 'static/'
+MEDIA_ROOT = os.path.join(BASE_DIR,'media')
+
+MEDIA_URL = '/media/'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
