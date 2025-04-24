@@ -47,7 +47,8 @@ INSTALLED_APPS = [
     'users.apps.UsersConfig',
     'articles.apps.ArticlesConfig',
     'apis.apps.ApisConfig',
-    'rest_framework'
+    'rest_framework',
+    'drf_spectacular'
 ]
 
 MIDDLEWARE = [
@@ -79,6 +80,18 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'cms.wsgi.application'
+
+REST_FRAMEWORK = {
+    #OTHER DRF SETTINGS GO HERE
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
+}
+
+SPECTACULAR_SETTINGS = {
+    'TITLE': 'CMS API',
+    'DESCRIPTION': 'API for Content Management System',
+    'VERSION': '1.0.0',
+    'SERVE_INCLUDE_SCHEMA': False,
+}
 
 
 # Database
