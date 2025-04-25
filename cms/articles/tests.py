@@ -251,6 +251,48 @@ class ArticleSearchTests(APITestCase):
          self.assertEqual(response.status_code, status.HTTP_200_OK)
          self.assertEqual(len(response.data), 0) # Expect empty list
 
+class UserRegistrationTests(APITestCase):
+    def setUp(self):
+        self.register_url = reverse("create-user")
+        self.user_profile = {
+            "username": "user1",
+            "email": "user1@example.com",
+            "password": "string",
+            "password2": "string",
+            "first_name": "string",
+            "last_name": "string",
+            "other_name": "string",
+            "occupation": "occupation",
+            "bio": "bio of the user created from test",
+            # "profile_picture": "string"
+        }
+        self.test_token_creation_url = reverse("obtain-token")
+    
+    def test_register_new_user(self):
+        token_data = {
+                "username": self.user_profile['email'],
+                "password": self.user_profile['password']
+            }
+        register_response = self.client.post(
+            self.register_url,
+            self.user_profile,
+            format='json'
+        )
+        token_response = self.client.post(
+            self.test_token_creation_url,
+            token_data,
+            format='json'
+        )
+        self.assertEqual(register_response.status_code,status.HTTP_201_CREATED)
+        self.assertTrue(CustomUser.objects.filter(email=self.user_profile['email']).exists())
+        # Check if the user is created
+        self.assertEqual(token_response.status_code, status.HTTP_200_OK)
+        self.assertTrue('token' in token_response.data) # Check if the token is returned in the response
+    
+        
+        
+        
+
     
 
     
