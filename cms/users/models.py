@@ -64,7 +64,7 @@ class CustomUser(AbstractUser):
         default=False,
         help_text=("Designates whether the user has verified their email address.")
     )
-    email_verification_token = models.UUIDField(max_length=255, blank=True, null=True)
+    email_verification_token = models.CharField(max_length=255, blank=True, null=True)
     email_verification_token_expires = models.DateTimeField(blank=True, null=True)
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS = []
@@ -74,9 +74,7 @@ class CustomUser(AbstractUser):
     def generate_verification_token(self):
         #generate a UUID token
         token = str(uuid.uuid4())
-
-        # Set expiry time (e.g., 24 hours from now)
-        expiry_time = timezone.now() + timezone.timedelta(hours=24)
+        expiry_time = timezone.now() + timezone.timedelta(days=1)
 
         self.email_verification_token = token
         self.email_verification_token_expires = expiry_time
