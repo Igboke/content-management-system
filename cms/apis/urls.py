@@ -1,6 +1,6 @@
 from django.urls import path
 from rest_framework.authtoken.views import obtain_auth_token
-from .views import ArticleViewSet, CommentListCreateAPIView,CommentRetrieveUpdateDestroyAPIView, UserRegistrationAPIView, ArticleSearchView, ArticleSearchViewPro
+from .views import ArticleViewSet, CommentListCreateAPIView,CommentRetrieveUpdateDestroyAPIView, UserRegistrationAPIView, ArticleSearchView, ArticleSearchViewPro, EmailVerificationAPIView
 
 article_list = ArticleViewSet.as_view({
     'get': 'list',
@@ -21,5 +21,6 @@ urlpatterns = [
     path("v1/articles/<slug:slug>/",article_detail,name='article-detail-update-delete'),
     path("v1/articles/<slug:slug>/comments/<int:pk>/",CommentRetrieveUpdateDestroyAPIView.as_view(),name="comment-detail-update-delete"),
     path("v1/articles/<slug:slug>/comments/",CommentListCreateAPIView.as_view(),name="comment-list-create"),
-    path("v1/auth/token/",obtain_auth_token,name="obtain-token")
+    path("v1/auth/token/",obtain_auth_token,name="obtain-token"),
+    path("v1/auth/verify/<int:user_id>/<str:token>/",EmailVerificationAPIView.as_view(),name="verify-email"),
 ]
