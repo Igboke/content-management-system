@@ -19,7 +19,7 @@ class CustomUserAdmin(UserAdmin):
     search_fields = ('email', 'username', 'first_name', 'last_name')
     
     # Fields to use for filtering in the sidebar
-    list_filter = ('is_staff', 'is_superuser', 'is_active', 'groups')
+    list_filter = ('is_staff', 'is_superuser', 'is_active', 'groups','is_verified')
 
     # How fields are grouped and ordered in the change form
     # overrides the default UserAdmin fieldsets to include your custom fields
