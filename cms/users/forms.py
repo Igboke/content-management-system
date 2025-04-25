@@ -15,7 +15,7 @@ class CustomUserCreationForm(forms.ModelForm): # Inherit from forms.ModelForm
     class Meta:
         model = CustomUser
         # password and password2 are defined separately above.
-        fields = ('email', 'username', 'first_name', 'last_name', 'other_name', 'occupation', 'bio', 'profile_picture')
+        fields = ('email', 'username', 'first_name', 'last_name', 'other_name', 'occupation', 'bio', 'profile_picture','is_verified')
 
 
     def clean_password2(self):
@@ -55,4 +55,4 @@ class CustomUserChangeForm(UserChangeForm):
     """
     class Meta:
         model = CustomUser
-        fields = ('email', 'username', 'other_name', 'first_name', 'last_name', 'occupation', 'bio', 'profile_picture','is_active', 'is_staff', 'is_superuser', 'groups', 'user_permissions', 'last_login', 'date_joined')
+        fields = ('email', 'username', 'other_name', 'first_name', 'last_name', 'occupation', 'bio', 'profile_picture','is_active', 'is_staff', 'is_superuser', 'groups', 'user_permissions', 'last_login', 'date_joined','is_verified')
