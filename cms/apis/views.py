@@ -1,4 +1,6 @@
-from rest_framework import generics, viewsets, filters, permissions
+from rest_framework import generics, viewsets, filters, permissions, status
+from rest_framework.response import Response
+from rest_framework.views import APIView
 from rest_framework.exceptions import PermissionDenied, NotFound
 from django.shortcuts import render, get_object_or_404
 from django.db.models import Q
@@ -8,6 +10,11 @@ from articles.serializers import ArticlesSerializers, CommentSerializers, Articl
 from users.serializers import CustomUserSerializer, UserRegistrationSerializer
 from django.contrib.auth import get_user_model
 from django.http import Http404
+from django.urls import reverse
+from django.template.loader import render_to_string
+from django.conf import settings
+from django.core.mail import send_mail, EmailMessage
+from django.db import transaction
 
 CustomUser = get_user_model()
 
@@ -22,6 +29,14 @@ class IsAuthorOrReadOnly(permissions.BasePermission):
             return True
         
         return obj.author == request.user #super().has_object_permission(request, view, obj)
+    
+class IsVerifiedUser(permissions.BasePermission):
+    """
+    Custom permission to only allow access to verified users.
+    """
+    def has_permission(self, request, view):
+        # Check if the user is authenticated AND verified
+        return request.user and request.user.is_verified and request.user.permissions.is_authenticated
 
 class ArticleViewSet(viewsets.ModelViewSet):
     """
@@ -31,7 +46,7 @@ class ArticleViewSet(viewsets.ModelViewSet):
     queryset = Article.objects.all()
     serializer_class = ArticlesSerializers
     lookup_field = 'slug' #using slug to retrieve individual articles
-    permission_classes = [permissions.IsAuthenticatedOrReadOnly,IsAuthorOrReadOnly]
+    permission_classes = [(IsVerifiedUser | permissions.IsAuthenticatedOrReadOnly), IsAuthorOrReadOnly]
 
     def get_queryset(self):
         """
@@ -69,6 +84,8 @@ class ArticleViewSet(viewsets.ModelViewSet):
                 raise Http404()
 
         return obj
+    
+
     
 
 # URL pattern: /articles/<slug:slug>/comments/
@@ -135,7 +152,38 @@ class UserRegistrationAPIView(generics.CreateAPIView):
 
     def perform_create(self, serializer):
         # The create method of the serializer handles user creation with password hashing
-        serializer.save()
+        user = serializer.save()
+
+        print(f"Created user: {user.pk}, email: {user.email}")
+
+        #Email Verification Logic
+        # 1. Generate token and expiry
+        token = user.generate_verification_token() # Call the method on the user instance
+        print(f"Generated token: {token} (expires: {user.email_verification_token_expires})")
+
+        # 2. Construct the verification URL
+        # Construct the full verification URL
+        verification_url = self.request.build_absolute_uri(
+            reverse('verify-email', kwargs={'user_id': user.pk, 'token': token})
+        )
+
+
+        # 3. Send the email
+        subject = ("Verify your email address")
+        message = f"Please click the link to verify your email: {verification_url}" # Simple plain text message
+
+        from_email = settings.DEFAULT_FROM_EMAIL # Configured in settings.py
+        recipient_list = [user.email]
+
+        try:
+            send_mail(subject, message, from_email, recipient_list)
+            print(f"Verification email sent to {user.email}") # For debugging
+        except Exception as e:
+            # Handle email sending errors (e.g., log them, notify admin)
+            print(f"Error sending verification email: {e}")
+
+
+        return user
 
 # articles/search/?q=keyword
 class ArticleSearchView(generics.ListAPIView):
@@ -184,4 +232,35 @@ class ArticleSearchViewPro(generics.ListAPIView):
         )
 
         return User.articles.filter(is_published='published')
+    
+class EmailVerificationAPIView(APIView):
+    """
+    API view to handle email verification via token in URL.
+    Expects user_id and token as URL parameters.
+    """
+    permission_classes = [permissions.AllowAny] # Anyone needs to access this to verify
+
+    
+
+    @transaction.atomic
+    def get(self, request, user_id, token, format=None):
+        try:
+            user = CustomUser.objects.select_for_update().get(pk=user_id)
+        except CustomUser.DoesNotExist:
+            return Response({"detail": "Invalid verification link."}, status=status.HTTP_400_BAD_REQUEST)
+        
+        print("[view] Verifying user:", user.pk)
+        print("[view] Token from URL:", token)
+        print("[view] DB token      :", user.email_verification_token)
+
+        if user.is_verified:
+            return Response({"detail": "Email already verified."}, status=status.HTTP_200_OK)
+
+        if user.is_verification_token_valid(token):
+            user.verify_email()
+            return Response({"detail": "Email successfully verified!"}, status=status.HTTP_200_OK)
+
+        return Response({"detail": "Invalid or expired verification token."}, status=status.HTTP_400_BAD_REQUEST)
+        
+            
     
