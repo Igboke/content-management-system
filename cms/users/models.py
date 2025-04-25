@@ -1,6 +1,10 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser, BaseUserManager
 from django.contrib.auth import get_user_model
+from django.utils import timezone
+import os
+from django.contrib.auth.tokens import default_token_generator
+import uuid
 
 
 class CustomUserManager(BaseUserManager): # Inherit from BaseUserManager
@@ -55,10 +59,45 @@ class CustomUser(AbstractUser):
     bio = models.TextField(blank=True, null=True)
     occupation = models.CharField(max_length=100, blank=True, null=True)
     profile_picture = models.ImageField(upload_to='profile_pictures/', blank=True, null=True)
+    is_verified = models.BooleanField(
+        ("verified"),
+        default=False,
+        help_text=("Designates whether the user has verified their email address.")
+    )
+    email_verification_token = models.UUIDField(max_length=255, blank=True, null=True)
+    email_verification_token_expires = models.DateTimeField(blank=True, null=True)
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS = []
 
     objects = CustomUserManager()
+
+    def generate_verification_token(self):
+        #generate a UUID token
+        token = str(uuid.uuid4())
+
+        # Set expiry time (e.g., 24 hours from now)
+        expiry_time = timezone.now() + timezone.timedelta(hours=24)
+
+        self.email_verification_token = token
+        self.email_verification_token_expires = expiry_time
+        self.save()
+
+        return token
+    
+    def is_verification_token_valid(self, token):
+        # Check if a token exists, matches the provided token, and is not expired
+        #using UUID token:
+        return (self.email_verification_token is not None and
+                self.email_verification_token == token and
+                self.email_verification_token_expires is not None and
+                self.email_verification_token_expires > timezone.now())
+
+    # Optional: Method to mark user as verified
+    def verify_email(self):
+        self.is_verified = True
+        self.email_verification_token = None # Clear the token after use
+        self.email_verification_token_expires = None
+        self.save()
 
     class Meta:
         verbose_name = ("user")
