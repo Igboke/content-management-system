@@ -154,19 +154,15 @@ class UserRegistrationAPIView(generics.CreateAPIView):
         # The create method of the serializer handles user creation with password hashing
         user = serializer.save()
 
-        print(f"Created user: {user.pk}, email: {user.email}")
-
         #Email Verification Logic
         # 1. Generate token and expiry
         token = user.generate_verification_token() # Call the method on the user instance
-        print(f"Generated token: {token} (expires: {user.email_verification_token_expires})")
 
         # 2. Construct the verification URL
         # Construct the full verification URL
         verification_url = self.request.build_absolute_uri(
             reverse('verify-email', kwargs={'user_id': user.pk, 'token': token})
         )
-
 
         # 3. Send the email
         subject = ("Verify your email address")
@@ -177,9 +173,8 @@ class UserRegistrationAPIView(generics.CreateAPIView):
 
         try:
             send_mail(subject, message, from_email, recipient_list)
-            print(f"Verification email sent to {user.email}") # For debugging
+    
         except Exception as e:
-            # Handle email sending errors (e.g., log them, notify admin)
             print(f"Error sending verification email: {e}")
 
 
@@ -240,18 +235,12 @@ class EmailVerificationAPIView(APIView):
     """
     permission_classes = [permissions.AllowAny] # Anyone needs to access this to verify
 
-    
-
     @transaction.atomic
     def get(self, request, user_id, token, format=None):
         try:
             user = CustomUser.objects.select_for_update().get(pk=user_id)
         except CustomUser.DoesNotExist:
             return Response({"detail": "Invalid verification link."}, status=status.HTTP_400_BAD_REQUEST)
-        
-        print("[view] Verifying user:", user.pk)
-        print("[view] Token from URL:", token)
-        print("[view] DB token      :", user.email_verification_token)
 
         if user.is_verified:
             return Response({"detail": "Email already verified."}, status=status.HTTP_200_OK)
