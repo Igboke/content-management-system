@@ -524,6 +524,23 @@ class LoginTests(APITestCase):
         response = self.client.post(self.login_url,{'email':'fakemail@gmail.com','password':'wrongpassword'}, format='json')
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
+    def test_login_rate_limit(self):
+        """Test the login API rate limit."""
+        test_limit = 5
+        print(f"\n--- Testing login rate limit ({test_limit}/minute) ---")
+
+        for i in range(test_limit):
+            response = self.client.post(self.login_url, self.login_data, format='json')
+            self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        # The next request should be rate limited
+        print(f"--- Sending {test_limit + 1}th request ---")
+        response = self.client.post(self.login_url, self.login_data, format='json')
+
+        self.assertEqual(response.status_code, status.HTTP_429_TOO_MANY_REQUESTS)
+        self.assertIn('Retry-After', response.headers)
+        print(f"Successfully received 429 with Retry-After: {response.headers.get('Retry-After')}")
+
     
         
         
