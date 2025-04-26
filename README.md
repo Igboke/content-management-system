@@ -188,6 +188,16 @@ This is a RESTful API for a Content Management System (CMS), built to manage art
 }
 ```
 
+## Test
+To run all tests
+```bash
+  python manage.py test
+  ```
+
+To run a specific class of test
+```bash
+  python manage.py test myapp.testsfile.TestClass
+```
 
 ## 🧪 Swagger UI
 
