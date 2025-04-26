@@ -8,8 +8,8 @@ from django.db.models import Q
 from django.utils import timezone
 from articles.models import Article, Comment
 from articles.serializers import ArticlesSerializers, CommentSerializers, ArticlesSearchSerializer, EmailVerificationResponseSerializer
-from users.serializers import CustomUserSerializer, UserRegistrationSerializer
-from django.contrib.auth import get_user_model
+from users.serializers import CustomUserSerializer, UserRegistrationSerializer, LoginSerializer
+from django.contrib.auth import get_user_model, authenticate
 from django.http import Http404
 from django.urls import reverse
 from django.template.loader import render_to_string
@@ -273,6 +273,30 @@ class EmailVerificationAPIView(APIView):
             return Response({"detail": "Email successfully verified!"}, status=status.HTTP_200_OK)
 
         return Response({"detail": "Invalid or expired verification token."}, status=status.HTTP_400_BAD_REQUEST)
+    
+class LoginAPIView(generics.GenericAPIView):
+    """
+    API view for user login.
+    """
+    serializer_class = LoginSerializer
+    permission_classes = [permissions.AllowAny] # Allow anyone to log in
+    throttle_classes = [AnonRateThrottle, ScopedRateThrottle]
+    throttle_scope = 'login' # Links to the 'login' rate in settings
+
+    def post(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        email = serializer.validated_data['email']
+        password = serializer.validated_data['password']
+
+        # Authenticate the user
+        user = authenticate(request, email=email, password=password)
+        
+        if user is None:
+            return Response({"detail": "Invalid credentials."}, status=status.HTTP_401_UNAUTHORIZED)
+        return Response({"detail": "Login successful."}, status=status.HTTP_200_OK)
+        
+        return Response({"token": token.key}, status=status.HTTP_200_OK)
         
             
     
