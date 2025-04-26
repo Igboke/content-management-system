@@ -148,7 +148,6 @@ class ArticleTests(APITestCase):
 
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED) # 401 Unauthorized
 
-
 class CommentTests(APITestCase):
     """Tests for the Comment API views."""
 
@@ -288,6 +287,33 @@ class UserRegistrationTests(APITestCase):
         # Check if the user is created
         self.assertEqual(token_response.status_code, status.HTTP_200_OK)
         self.assertTrue('token' in token_response.data) # Check if the token is returned in the response
+
+    def test_verify_new_user(self):
+        # create user via create_user to ensure password hashing and logic
+        user = CustomUser.objects.create_user(
+            username="tragic",
+            email="test@user.com",
+            password="testpass123"
+        )
+
+        # generate a verification token
+        token = user.generate_verification_token()
+
+        self.assertFalse(user.is_verified)
+        self.assertTrue(len(token) > 1)
+
+        # build verification URL
+        url = reverse('verify-email', kwargs={'user_id': user.pk, 'token': token})
+        response = self.client.get(url)
+
+        # test response
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['detail'], "Email successfully verified!")
+
+        # refresh from DB to check if marked verified
+        user.refresh_from_db()
+        self.assertTrue(user.is_verified)
+
     
         
         
