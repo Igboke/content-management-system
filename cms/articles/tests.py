@@ -329,7 +329,7 @@ class ThrottleTests(APITestCase):
             password='throttlepassword'
         )
 
-        # Get URLs (adjust names based on your urls.py)
+        # Get URLs
         self.article_list_create_url = reverse('article-list-create')
         self.obtain_token_url = reverse('obtain-token')
         self.comment_list_create_url = lambda slug: reverse('comment-list-create', kwargs={'slug': slug})
@@ -389,12 +389,9 @@ class ThrottleTests(APITestCase):
 
     def test_user_rate_limit_authenticated(self):
         """Authenticated users should be rate-limited on a throttled endpoint."""
-        # Assume you are testing a view with UserRateThrottle or ScopedRateThrottle with user scope
-        # For demonstration, let's assume we test the article list view
-        # If 'user' rate is high, use a low test rate via ScopedRateThrottle on a test view
-        # Let's simulate hitting a '5/minute' limit for the authenticated user
+        # Let's simulate hitting a '50/day' limit for the authenticated user
         test_limit = 50
-        url_to_test = self.article_list_create_url # Or your specific throttled user URL
+        url_to_test = self.article_list_create_url
 
         self.client.force_authenticate(user=self.user) # Authenticate
 
@@ -413,6 +410,32 @@ class ThrottleTests(APITestCase):
         print(f"Successfully received 429 with Retry-After: {response.headers.get('Retry-After')}")
 
         self.client.force_authenticate(user=None) # Log out
+
+    def test_comment_create_rate_limit_authenticated(self):
+        """Authenticated users should be rate-limited on comment creation."""
+        test_limit = 15
+        url_to_test = self.comment_list_create_url(self.article_commentable.slug)
+        comment_data = {'content': 'Test comment {}'}
+
+        self.client.force_authenticate(user=self.user)
+
+        print(f"\n--- Testing authenticated comment creation rate limit ({test_limit}/hour) ---")
+
+        for i in range(test_limit):
+            data = {'content': comment_data['content'].format(i+1)}
+            response = self.client.post(url_to_test, data, format='json')
+            self.assertEqual(response.status_code, status.HTTP_201_CREATED, f"Request {i+1} failed unexpectedly with status {response.status_code}")
+
+        # The next request should be rate limited
+        print(f"--- Sending {test_limit + 1}th request ---")
+        data = {'content': comment_data['content'].format(test_limit + 1)}
+        response = self.client.post(url_to_test, data, format='json')
+
+        self.assertEqual(response.status_code, status.HTTP_429_TOO_MANY_REQUESTS)
+        self.assertIn('Retry-After', response.headers)
+        print(f"Successfully received 429 with Retry-After: {response.headers.get('Retry-After')}")
+
+        self.client.force_authenticate(user=None)
 
     
         
