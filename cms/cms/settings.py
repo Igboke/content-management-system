@@ -82,6 +82,7 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'cms.wsgi.application'
 
+#to run unit tests the amount of time to wait for far exceeds what should be obtainable in a test so i commented the ACTUAL throttle for each API, if you want to test the throttle you can uncomment the lines in the settings.py file, its in minutes
 REST_FRAMEWORK = {
     #OTHER DRF SETTINGS GO HERE
     'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
@@ -90,14 +91,15 @@ REST_FRAMEWORK = {
         'rest_framework.authentication.SessionAuthentication'            
         ],
     'DEFAULT_THROTTLE_RATES': {
-        'anon': '1000/day',         # General rate for anonymous users by IP
-        'user': '10000/day',        # General rate for authenticated users by User ID
-
+        # 'anon': '1000/day',         # General rate for anonymous users by IP
+        'user': '50/day',        # General rate for authenticated users by User ID
+        'anon':'5/minute',
+        'registration':'5/minute',
         # Specific, stricter rates for sensitive/resource-intensive actions
-        'login': '10/minute',       # Limit login attempts per IP or user
-        'registration': '20/hour',  # Limit registration attempts per IP
-        'comment': '100/hour',      # Limit comments per hour per user
-        'search': '60/minute',      # Limit search queries per user/IP
+        'login': '5/minute',       # Limit login attempts per IP or user
+        # 'registration': '20/hour',  # Limit registration attempts per IP
+        'comment': '15/hour',      # Limit comments per hour per user
+        'search': '6/minute',      # Limit search queries per user/IP
         'upload': '30/day',         # Limit file uploads per user
     }
 }
