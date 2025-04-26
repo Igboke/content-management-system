@@ -3,6 +3,10 @@ from django.contrib.auth import get_user_model
 
 CustomUser = get_user_model()
 
+class LoginSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+    password = serializers.CharField(style={'input_type': 'password'}, write_only=True)
+    
 class CustomUserSerializer(serializers.ModelSerializer):
     class Meta:
         model= CustomUser
