@@ -35,158 +35,211 @@ This is a RESTful API for a Content Management System (CMS), built to manage art
     python manage.py runserver
     ```
 
+## Authentication
+
+- **Token Authentication**: Use `Authorization` header with prefix "Token".  
+  Example: `Authorization: Token <your_token>`
+- **Cookie Authentication**: Use `sessionid` cookie.
+
+
 ## 📚 Endpoints
 
-### 📝 Articles
+#### List/Create Articles
+- **GET** `/api/v1/articles/`  
+  **Description**: List published articles.  
+  **Security**: Token or Cookie  
+  **Response**: `200 OK` - Array of [`ArticlesSerializers`](#articlesserializers)
 
-- **List Articles**  
-  `GET /articles/`  
-  Returns all published articles.  
-  🔒 Requires Authentication  
+- **POST** `/api/v1/articles/`  
+  **Description**: Create a new article.  
+  **Security**: Token or Cookie  
+  **Request Body**: [`ArticlesSerializers`](#articlesserializers) (JSON/form-data/x-www-form-urlencoded)  
+  **Response**: `201 Created` - [`ArticlesSerializers`](#articlesserializers)
 
-- **Create Article**  
-  `POST /articles/`  
-  Create a new article.  
-  🔒 Requires Authentication  
+#### Retrieve/Update/Delete Article
+- **GET** `/api/v1/articles/{slug}/`  
+  **Description**: Retrieve a specific article by slug.  
+  **Security**: Token or Cookie  
+  **Parameters**:  
+    - `slug` (string, path)  
+  **Response**: `200 OK` - [`ArticlesSerializers`](#articlesserializers)
 
-- **Retrieve Article**  
-  `GET /articles/{slug}/`  
-  Get details of a specific article.  
-  🔒 Requires Authentication  
+- **PUT** `/api/v1/articles/{slug}/`  
+  **Description**: Fully update an article.  
+  **Security**: Token or Cookie  
+  **Parameters**:  
+    - `slug` (string, path)  
+  **Request Body**: [`ArticlesSerializers`](#articlesserializers)  
+  **Response**: `200 OK` - Updated article.
 
-- **Update Article**  
-  `PUT /articles/{slug}/`  
-  Update all fields of a specific article.  
-  🔒 Requires Authentication  
+- **PATCH** `/api/v1/articles/{slug}/`  
+  **Description**: Partially update an article.  
+  **Security**: Token or Cookie  
+  **Parameters**:  
+    - `slug` (string, path)  
+  **Request Body**: [`PatchedArticlesSerializers`](#patchedarticlesserializers)  
+  **Response**: `200 OK` - Updated article.
 
-- **Partial Update Article**  
-  `PATCH /articles/{slug}/`  
-  Update some fields of an article.  
-  🔒 Requires Authentication  
-
-- **Delete Article**  
-  `DELETE /articles/{slug}/`  
-  Delete a specific article.  
-  🔒 Requires Authentication  
-
-- **Search Articles by Title**  
-  `GET /articles/search/`  
-  🔒 Requires Authentication  
-
-- **Search Articles by Author's Name**  
-  `GET /articles/search/{name}/`  
-  🔒 Requires Authentication  
-
----
-
-### 💬 Comments
-
-- **List Comments for an Article**  
-  `GET /articles/{slug}/comments/`  
-  🔒 Requires Authentication  
-
-- **Create Comment on an Article**  
-  `POST /articles/{slug}/comments/`  
-  🔒 Requires Authentication  
-
-- **Retrieve Specific Comment**  
-  `GET /articles/{slug}/comments/{id}/`  
-  🔒 Requires Authentication  
-
-- **Update Comment**  
-  `PUT /articles/{slug}/comments/{id}/`  
-  🔒 Requires Authentication  
-
-- **Partial Update Comment**  
-  `PATCH /articles/{slug}/comments/{id}/`  
-  🔒 Requires Authentication  
-
-- **Delete Comment**  
-  `DELETE /articles/{slug}/comments/{id}/`  
-  🔒 Requires Authentication  
+- **DELETE** `/api/v1/articles/{slug}/`  
+  **Description**: Delete an article.  
+  **Security**: Token or Cookie  
+  **Parameters**:  
+    - `slug` (string, path)  
+  **Response**: `204 No Content`
 
 ---
 
-### 🔐 Auth & Users
+### Comments
 
-- **Token Authentication**  
-  `POST /auth/token/`  
-  Request:
-  ```json
-  {
-    "username": "your_username",
-    "password": "your_password"
-  }
-  ```  
-  🔒 Requires Authentication  
+#### List/Create Comments for an Article
+- **GET** `/api/v1/articles/{slug}/comments/`  
+  **Description**: List comments for an article.  
+  **Security**: Token, Cookie, or Public  
+  **Parameters**:  
+    - `slug` (string, path)  
+  **Response**: `200 OK` - Array of [`CommentSerializers`](#commentserializers)
 
-- **User Registration**  
-  `POST /user/create/`
+- **POST** `/api/v1/articles/{slug}/comments/`  
+  **Description**: Create a new comment.  
+  **Security**: Token or Cookie  
+  **Parameters**:  
+    - `slug` (string, path)  
+  **Request Body**: [`CommentSerializers`](#commentserializers)  
+  **Response**: `201 Created` - Created comment.
 
----
+#### Manage Specific Comment
+- **GET** `/api/v1/articles/{slug}/comments/{id}/`  
+  **Description**: Retrieve a comment.  
+  **Security**: Token, Cookie, or Public  
+  **Parameters**:  
+    - `slug` (string, path)  
+    - `id` (integer, path)  
+  **Response**: `200 OK` - [`CommentSerializers`](#commentserializers)
 
-## 🧱 Schema: Article (`ArticlesSerializers`)
-
-```json
-{
-  "id": "integer",
-  "title": "string",
-  "slug": "string (read-only)",
-  "author": {
-    "id": "integer",
-    "username": "string",
-    "email": "email",
-    "first_name": "string",
-    "last_name": "string",
-    "other_name": "string or null",
-    "occupation": "string or null",
-    "bio": "string or null",
-    "profile_picture": "uri or null"
-  },
-  "content": "string",
-  "created_at": "datetime",
-  "updated_at": "datetime",
-  "picture": "uri (optional)",
-  "is_published": "draft | published | archived | review",
-  "comment": [/* list of comment objects */]
-}
-```
+- **PUT/PATCH/DELETE** `/api/v1/articles/{slug}/comments/{id}/`  
+  **Description**: Update/delete a comment (author only).  
+  **Security**: Token or Cookie  
+  **Parameters**:  
+    - `slug` (string, path)  
+    - `id` (integer, path)  
+  **Request Body** (PUT/PATCH): [`CommentSerializers`](#commentserializers) or [`PatchedCommentSerializers`](#patchedcommentserializers)  
+  **Response**:  
+    - `200 OK` (PUT/PATCH)  
+    - `204 No Content` (DELETE)
 
 ---
 
-## 💬 Schema: Comment (`CommentSerializers`)
+### Search
 
-```json
-{
-  "id": "integer",
-  "author": {
-    "id": "integer",
-    "username": "string",
-    "email": "email"
-  },
-  "content": "string",
-  "created_at": "datetime",
-  "updated_at": "datetime"
-}
-```
+- **GET** `/api/v1/articles/search/`  
+  **Description**: Search articles by title.  
+  **Security**: Token, Cookie, or Public  
+  **Response**: `200 OK` - Array of [`ArticlesSerializers`](#articlesserializers)
+
+- **GET** `/api/v1/articles/search/{email}/`  
+  **Description**: Search articles by author's email.  
+  **Security**: Token, Cookie, or Public  
+  **Parameters**:  
+    - `email` (string, path)  
+  **Response**: `200 OK` - Array of [`ArticlesSearch`](#articlessearch)
 
 ---
 
-## 👤 Schema: User (`CustomUser`)
+### Authentication
 
-```json
-{
-  "id": "integer",
-  "username": "string",
-  "email": "string",
-  "first_name": "string",
-  "last_name": "string",
-  "other_name": "string or null",
-  "occupation": "string or null",
-  "bio": "string or null",
-  "profile_picture": "uri or null"
-}
-```
+- **POST** `/api/v1/auth/login/`  
+  **Description**: User login.  
+  **Request Body**: [`Login`](#login)  
+  **Response**: `200 OK` - Login details.
+
+- **POST** `/api/v1/auth/token/`  
+  **Description**: Obtain auth token.  
+  **Request Body**: [`AuthToken`](#authtoken)  
+  **Response**: `200 OK` - Token details.
+
+- **GET** `/api/v1/auth/verify/{user_id}/{token}/`  
+  **Description**: Email verification.  
+  **Parameters**:  
+    - `user_id` (integer, path)  
+    - `token` (string, path)  
+  **Response**: `200 OK` - [`EmailVerificationResponse`](#emailverificationresponse)
+
+---
+
+### User Registration
+
+- **POST** `/api/v1/user/create/`  
+  **Description**: Register a new user.  
+  **Request Body**: [`UserRegistration`](#userregistration)  
+  **Response**: `201 Created` - User details.
+
+---
+
+## Schemas
+
+### ArticlesSerializers
+| Property        | Type                | Description                              | Required |
+|-----------------|---------------------|------------------------------------------|----------|
+| `id`            | integer (read-only) | Article ID                               | Yes      |
+| `title`         | string              | Article title (max 200 chars)            | Yes      |
+| `slug`          | string (read-only)  | URL-friendly slug                        | Yes      |
+| `author`        | [CustomUser](#customuser) | Author details                    | Yes      |
+| `content`       | string              | Article content                          | Yes      |
+| `created_at`    | datetime (read-only)| Creation timestamp                       | Yes      |
+| `updated_at`    | datetime (read-only)| Last update timestamp                    | Yes      |
+| `picture`       | string (URI)        | Optional article image                   | No       |
+| `is_published`  | enum (`draft`, `published`, `archived`, `review`) | Publication status | Yes |
+| `comment`       | Array of [CommentSerializers](#commentserializers) | Comments | Yes |
+
+### CommentSerializers
+| Property        | Type                | Description                              | Required |
+|-----------------|---------------------|------------------------------------------|----------|
+| `id`            | integer (read-only) | Comment ID                               | Yes      |
+| `author`        | [CustomUser](#customuser) | Author details                    | Yes      |
+| `content`       | string              | Comment content                          | Yes      |
+| `created_at`    | datetime (read-only)| Creation timestamp                       | Yes      |
+| `updated_at`    | datetime (read-only)| Last update timestamp                    | Yes      |
+
+### CustomUser
+| Property            | Type                | Description                              | Required |
+|---------------------|---------------------|------------------------------------------|----------|
+| `id`                | integer (read-only) | User ID                                  | Yes      |
+| `username`          | string              | Username (max 150 chars)                 | Yes      |
+| `email`             | string (email)      | Valid email address                      | Yes      |
+| `first_name`        | string              | First name (max 150 chars)               | No       |
+| `last_name`         | string              | Last name (max 150 chars)                | No       |
+| `other_name`        | string              | Optional other name                      | No       |
+| `occupation`        | string              | Occupation (max 100 chars)               | No       |
+| `bio`               | string              | Biography                                | No       |
+| `profile_picture`   | string (URI)        | Profile image URL                        | No       |
+
+### AuthToken
+| Property   | Type     | Description          | Required |
+|------------|----------|----------------------|----------|
+| `username` | string   | Username             | Yes      |
+| `password` | string   | Password             | Yes      |
+| `token`    | string   | Auth token (read-only)| Yes     |
+
+### UserRegistration
+| Property            | Type     | Description                              | Required |
+|---------------------|----------|------------------------------------------|----------|
+| `username`          | string   | Username (max 150 chars)                 | Yes      |
+| `email`             | string   | Valid email address                      | Yes      |
+| `password`          | string   | Password (write-only)                    | Yes      |
+| `password2`         | string   | Confirm password (write-only)            | Yes      |
+| `first_name`        | string   | First name (max 150 chars)               | No       |
+| `last_name`         | string   | Last name (max 150 chars)                | No       |
+| `other_name`        | string   | Optional other name                      | No       |
+| `occupation`        | string   | Occupation (max 100 chars)               | No       |
+| `bio`               | string   | Biography                                | No       |
+| `profile_picture`   | string   | Profile image URL                        | No       |
+
+### Other Schemas
+- **PatchedArticlesSerializers**: Partial update version of `ArticlesSerializers`.
+- **PatchedCommentSerializers**: Partial update version of `CommentSerializers`.
+- **ArticlesSearch**: Includes `title`, `slug`, `author`, `content`, `created_at`.
+- **Login**: Requires `email` and `password`.
+- **EmailVerificationResponse**: Contains `detail` (string).
 
 ## Test
 To run all tests
