@@ -2,6 +2,7 @@ from rest_framework import generics, viewsets, filters, permissions, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.exceptions import PermissionDenied, NotFound
+from rest_framework.authtoken.views import ObtainAuthToken
 from django.shortcuts import render, get_object_or_404
 from django.db.models import Q
 from django.utils import timezone
@@ -15,8 +16,18 @@ from django.template.loader import render_to_string
 from django.conf import settings
 from django.core.mail import send_mail, EmailMessage
 from django.db import transaction
+from rest_framework.throttling import UserRateThrottle, AnonRateThrottle, ScopedRateThrottle
+
 
 CustomUser = get_user_model()
+
+class ThrottledObtainAuthToken(ObtainAuthToken):
+    """
+    Custom ObtainAuthToken view with throttling applied.
+    Limits login attempts per IP and using a specific 'login' scope rate.
+    """
+    throttle_classes = [AnonRateThrottle, ScopedRateThrottle]
+    throttle_scope = 'login' # Links to the 'login' rate in settings
 
 #defining permission class
 class IsAuthorOrReadOnly(permissions.BasePermission):
@@ -48,6 +59,7 @@ class ArticleViewSet(viewsets.ModelViewSet):
     serializer_class = ArticlesSerializers
     lookup_field = 'slug' #using slug to retrieve individual articles
     permission_classes = [(IsVerifiedUser | permissions.IsAuthenticatedOrReadOnly), IsAuthorOrReadOnly]
+    throttle_classes = [AnonRateThrottle, UserRateThrottle]
 
     def get_queryset(self):
         """
@@ -96,6 +108,8 @@ class CommentListCreateAPIView(generics.ListCreateAPIView):
     """
     serializer_class = CommentSerializers
     permission_classes = [permissions.IsAuthenticatedOrReadOnly] # Authenticated users can comment
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = 'comment'
 
     def get_queryset(self):
         """
@@ -141,6 +155,7 @@ class CommentRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView)
     lookup_field = 'pk' # Default lookup field is 'pk' (ID)
     # Permissions: Authenticated users can read, author can update/delete
     permission_classes = [permissions.IsAuthenticatedOrReadOnly, IsAuthorOrReadOnly]
+    throttle_classes = [AnonRateThrottle, UserRateThrottle]
 
 # user/create
 class UserRegistrationAPIView(generics.CreateAPIView):
@@ -150,6 +165,8 @@ class UserRegistrationAPIView(generics.CreateAPIView):
     queryset = CustomUser.objects.all() # Needs a queryset though CreateAPIView doesn't query it
     serializer_class = UserRegistrationSerializer
     permission_classes = [permissions.AllowAny] # Allow anyone to register
+    throttle_classes = [AnonRateThrottle, ScopedRateThrottle]
+    throttle_scope = 'registration' # Links to the 'registration' rate in settings
 
     def perform_create(self, serializer):
         # The create method of the serializer handles user creation with password hashing
@@ -189,6 +206,8 @@ class ArticleSearchView(generics.ListAPIView):
     serializer_class = ArticlesSerializers
     # Allow unauthenticated users to search published articles
     permission_classes = [permissions.AllowAny] 
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = 'search' # Links to the 'search' rate in settings
 
     def get_queryset(self):
         """
@@ -216,6 +235,8 @@ class ArticleSearchViewPro(generics.ListAPIView):
     """
     serializer_class = ArticlesSearchSerializer
     permission_classes = [permissions.AllowAny] 
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = 'search' # Links to the 'search' rate in settings
 
     def get_queryset(self):
         """
