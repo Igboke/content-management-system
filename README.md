@@ -291,4 +291,4 @@ This project is licensed under the [MIT License](LICENSE).
 For questions or feedback, please contact:
 - **Email**: danieligboke669@gmail.com
 - **GitHub**: [Igboke](https://github.com/Igboke)
-- **Website**: TO BE UPDATED
+- **Project Website**: https://content-management-system-rjdu.onrender.com/api/schema/swagger-ui/
