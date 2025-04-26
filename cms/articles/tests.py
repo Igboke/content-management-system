@@ -7,6 +7,8 @@ from django.utils import timezone
 from datetime import timedelta
 from .models import Article, Comment
 from .serializers import ArticlesSerializers, ArticlesSearchSerializer, CommentSerializers
+from rest_framework.throttling import AnonRateThrottle, UserRateThrottle, ScopedRateThrottle
+
 
 # Get your custom user model
 CustomUser = get_user_model()
@@ -313,6 +315,104 @@ class UserRegistrationTests(APITestCase):
         # refresh from DB to check if marked verified
         user.refresh_from_db()
         self.assertTrue(user.is_verified)
+
+
+class ThrottleTests(APITestCase):
+    """
+    Tests for API rate limiting.
+    """
+    def setUp(self):
+        """Set up a user for authenticated tests."""
+        self.user = CustomUser.objects.create_user(
+            username='throttleuser',
+            email='throttle@example.com',
+            password='throttlepassword'
+        )
+
+        # Get URLs (adjust names based on your urls.py)
+        self.article_list_create_url = reverse('article-list-create')
+        self.obtain_token_url = reverse('obtain-token')
+        self.comment_list_create_url = lambda slug: reverse('comment-list-create', kwargs={'slug': slug})
+
+        self.article_commentable = Article.objects.create(
+            title='Comment Test Article',
+            author=self.user,
+            content='to be or not to be',
+            is_published='published',
+        )
+    
+    def test_registration_rate_limit_anonymous(self):
+        """Anonymous users should be rate-limited on registration endpoint."""
+        # We'll simulate hitting a '5/minute' limit
+        registration_url = reverse('create-user')
+        test_limit = 5
+        test_email_base = 'testanon{}@example.com'
+        test_password = 'password'
+
+        print(f"\n--- Testing anonymous registration rate limit ({test_limit}/minute) ---")
+
+        for i in range(test_limit):
+            user_data = {
+            "username": f'anonuser{i}',
+            "email":  test_email_base.format(i),
+            "password": test_password,
+            "password2": test_password,
+            "first_name": "string",
+            "last_name": "string",
+            "other_name": "string",
+            "occupation": "occupation",
+            "bio": "bio of the user created from test",
+            # "profile_picture": "string"
+        }
+            response = self.client.post(registration_url, user_data, format='json')
+            self.assertEqual(response.status_code, status.HTTP_201_CREATED, f"Request {i+1} failed unexpectedly with status {response.status_code}")
+
+        # The next request should be rate limited
+        print(f"--- Sending {test_limit + 1}th request ---")
+        user_data= {
+            "username": f'anonuser{test_limit}',
+            "email":  test_email_base.format(test_limit),
+            "password": test_password,
+            "password2": test_password,
+            "first_name": "string",
+            "last_name": "string",
+            "other_name": "string",
+            "occupation": "occupation",
+            "bio": "bio of the user created from test",
+            # "profile_picture": "string"
+        }
+        response = self.client.post(registration_url, user_data, format='json')
+
+        self.assertEqual(response.status_code, status.HTTP_429_TOO_MANY_REQUESTS) # Expect 429
+        self.assertIn('Retry-After', response.headers) # Check for Retry-After header
+        print(f"Successfully received 429 with Retry-After: {response.headers.get('Retry-After')}")
+
+    def test_user_rate_limit_authenticated(self):
+        """Authenticated users should be rate-limited on a throttled endpoint."""
+        # Assume you are testing a view with UserRateThrottle or ScopedRateThrottle with user scope
+        # For demonstration, let's assume we test the article list view
+        # If 'user' rate is high, use a low test rate via ScopedRateThrottle on a test view
+        # Let's simulate hitting a '5/minute' limit for the authenticated user
+        test_limit = 50
+        url_to_test = self.article_list_create_url # Or your specific throttled user URL
+
+        self.client.force_authenticate(user=self.user) # Authenticate
+
+        print(f"\n--- Testing authenticated user rate limit ({test_limit}/day) ---")
+
+        for i in range(test_limit):
+            response = self.client.get(url_to_test)
+            self.assertEqual(response.status_code, status.HTTP_200_OK, f"Request {i+1} failed unexpectedly with status {response.status_code}")
+
+        # The next request should be rate limited
+        print(f"--- Sending {test_limit + 1}th request ---")
+        response = self.client.get(url_to_test)
+
+        self.assertEqual(response.status_code, status.HTTP_429_TOO_MANY_REQUESTS)
+        self.assertIn('Retry-After', response.headers)
+        print(f"Successfully received 429 with Retry-After: {response.headers.get('Retry-After')}")
+
+        self.client.force_authenticate(user=None) # Log out
 
     
         
