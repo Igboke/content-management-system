@@ -437,6 +437,41 @@ class ThrottleTests(APITestCase):
 
         self.client.force_authenticate(user=None)
 
+    #Adding more tests for other endpoints with specific throttles (Search, Login)
+    def test_search_rate_limit(self):
+        """Authenticated users should be rate-limited on search."""
+        test_limit = 6
+        url_to_test = reverse('article-search')
+        search_data = {'q': 'Django'}
+
+        self.client.force_authenticate(user=self.user)
+
+        print(f"\n--- Testing authenticated search rate limit ({test_limit}/minute) ---")
+
+        for i in range(test_limit):
+            response = self.client.get(url_to_test, search_data)
+            self.assertEqual(response.status_code, status.HTTP_200_OK, f"Request {i+1} failed unexpectedly with status {response.status_code}")
+
+        # The next request should be rate limited
+        print(f"--- Sending {test_limit + 1}th request ---")
+        response = self.client.get(url_to_test, search_data)
+
+        self.assertEqual(response.status_code, status.HTTP_429_TOO_MANY_REQUESTS)
+        self.assertIn('Retry-After', response.headers)
+        print(f"Successfully received 429 with Retry-After: {response.headers.get('Retry-After')}")
+        self.client.force_authenticate(user=None) # Log out
+
+        print(f"\n--- Testing inauthenticated search rate limit ({test_limit}/minute) ---")
+        for i in range(test_limit):
+            response = self.client.get(url_to_test, search_data)
+            self.assertEqual(response.status_code, status.HTTP_200_OK, f"Request {i+1} failed unexpectedly with status {response.status_code}")
+        # The next request should be rate limited
+        print(f"--- Sending {test_limit + 1}th request ---")
+        response = self.client.get(url_to_test, search_data)
+        self.assertEqual(response.status_code, status.HTTP_429_TOO_MANY_REQUESTS)
+        self.assertIn('Retry-After', response.headers)
+        print(f"Successfully received 429 with Retry-After: {response.headers.get('Retry-After')}")
+
 # Test the ThrottledObtainAuthToken view
 class AuthThrottleTests(APITestCase):
     def setUp(self):
