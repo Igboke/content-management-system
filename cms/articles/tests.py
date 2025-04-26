@@ -437,6 +437,33 @@ class ThrottleTests(APITestCase):
 
         self.client.force_authenticate(user=None)
 
+# Test the ThrottledObtainAuthToken view
+class AuthThrottleTests(APITestCase):
+    def setUp(self):
+        self.user = CustomUser.objects.create_user(username='loginuser', 
+                                                   email='login@ex.com', 
+                                                   password='loginpass')
+        self.obtain_token_url = reverse('obtain-token')
+
+    def test_login_rate_limit_anonymous(self):
+        """Anonymous users should be rate-limited on the login endpoint."""
+    
+        test_limit = 5
+        login_data = {'username': 'login@ex.com', 'password': 'loginpass'}
+
+        print(f"\n--- Testing anonymous login rate limit ({test_limit}/minute) ---")
+
+        for i in range(test_limit):
+            response = self.client.post(self.obtain_token_url, login_data, format='json')
+
+        # The next request should be rate limited
+        print(f"--- Sending {test_limit + 1}th request ---")
+        response = self.client.post(self.obtain_token_url, login_data, format='json')
+
+        self.assertEqual(response.status_code, status.HTTP_429_TOO_MANY_REQUESTS)
+        self.assertIn('Retry-After', response.headers)
+        print(f"Successfully received 429 with Retry-After: {response.headers.get('Retry-After')}")
+
     
         
         
