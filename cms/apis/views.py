@@ -36,7 +36,8 @@ class IsVerifiedUser(permissions.BasePermission):
     """
     def has_permission(self, request, view):
         # Check if the user is authenticated AND verified
-        return request.user and request.user.is_verified and request.user.permissions.is_authenticated
+        user = request.user
+        return user.is_authenticated and getattr(user, "is_verified", False)
 
 class ArticleViewSet(viewsets.ModelViewSet):
     """
