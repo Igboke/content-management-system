@@ -117,6 +117,12 @@ SPECTACULAR_SETTINGS = {
 
 DATABASES = {
     'default': {
+        # 'ENGINE': 'django.db.backends.postgresql',
+        # 'NAME': os.getenv("DB_NAME"),        # Choose a name for your database inside Postgres
+        # 'USER': 'postgres',          # Default superuser created by the Postgres image
+        # 'PASSWORD': os.getenv("DB_PASSWORD"), # Use the password 
+        # 'HOST': os.getenv("DB_HOST"),    # Use the IP address of your Docker Machine VM 
+        # 'PORT': '5432',              # Use the port mapped in the docker run command (5432
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': BASE_DIR / 'db.sqlite3',
     }
