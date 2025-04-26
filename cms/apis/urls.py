@@ -1,6 +1,6 @@
 from django.urls import path
 from rest_framework.authtoken.views import obtain_auth_token
-from .views import ArticleViewSet, CommentListCreateAPIView,CommentRetrieveUpdateDestroyAPIView, UserRegistrationAPIView, ArticleSearchView, ArticleSearchViewPro, EmailVerificationAPIView, ThrottledObtainAuthToken
+from .views import ArticleViewSet, CommentListCreateAPIView,CommentRetrieveUpdateDestroyAPIView, UserRegistrationAPIView, ArticleSearchView, ArticleSearchViewPro, EmailVerificationAPIView, ThrottledObtainAuthToken, LoginAPIView
 
 article_list = ArticleViewSet.as_view({
     'get': 'list',
@@ -14,6 +14,7 @@ article_detail = ArticleViewSet.as_view({
 })
 
 urlpatterns = [
+    path("v1/auth/login/",LoginAPIView.as_view(),name="login"),
     path("v1/user/create/",UserRegistrationAPIView.as_view(),name="create-user"),
     path("v1/articles/", article_list, name='article-list-create'),
     path("v1/articles/search/<str:email>/",ArticleSearchViewPro.as_view(),name="article-search-email"),
