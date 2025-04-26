@@ -6,7 +6,7 @@ from django.shortcuts import render, get_object_or_404
 from django.db.models import Q
 from django.utils import timezone
 from articles.models import Article, Comment
-from articles.serializers import ArticlesSerializers, CommentSerializers, ArticlesSearchSerializer
+from articles.serializers import ArticlesSerializers, CommentSerializers, ArticlesSearchSerializer, EmailVerificationResponseSerializer
 from users.serializers import CustomUserSerializer, UserRegistrationSerializer
 from django.contrib.auth import get_user_model
 from django.http import Http404
@@ -235,6 +235,7 @@ class EmailVerificationAPIView(APIView):
     Expects user_id and token as URL parameters.
     """
     permission_classes = [permissions.AllowAny] # Anyone needs to access this to verify
+    serializer_class = EmailVerificationResponseSerializer
 
     @transaction.atomic
     def get(self, request, user_id, token, format=None):

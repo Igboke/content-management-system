@@ -34,3 +34,7 @@ class ArticlesSearchSerializer(serializers.ModelSerializer):
         model = Article
 
         fields = ('title', 'slug', 'author', 'content', 'created_at')
+
+class EmailVerificationResponseSerializer(serializers.Serializer):
+    detail = serializers.CharField()
+
