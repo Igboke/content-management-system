@@ -499,6 +499,31 @@ class AuthThrottleTests(APITestCase):
         self.assertIn('Retry-After', response.headers)
         print(f"Successfully received 429 with Retry-After: {response.headers.get('Retry-After')}")
 
+class LoginTests(APITestCase):
+    """
+    Tests for the login functionality.
+    """
+    def setUp(self):
+        self.user = CustomUser.objects.create_user(username='loginuser',
+                                           email='loginuser@test.com',
+                                           password='loginpassword')
+        self.login_url = reverse('login')
+        self.login_data = {
+            'email': self.user.email,
+            'password': 'loginpassword'
+        }
+    def test_login_api(self):
+        """Test the login API with valid credentials."""
+        response = self.client.post(self.login_url, self.login_data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIn('detail', response.data)
+        self.assertEqual(response.data['detail'], 'Login successful.')
+    
+    def test_login_api_invalid_credentials(self):
+        """Test the login API with invalid credentials."""
+        response = self.client.post(self.login_url,{'email':'fakemail@gmail.com','password':'wrongpassword'}, format='json')
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
     
         
         
