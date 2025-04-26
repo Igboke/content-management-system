@@ -88,7 +88,18 @@ REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES':[
         'rest_framework.authentication.TokenAuthentication',
         'rest_framework.authentication.SessionAuthentication'            
-        ]
+        ],
+    'DEFAULT_THROTTLE_RATES': {
+        'anon': '1000/day',         # General rate for anonymous users by IP
+        'user': '10000/day',        # General rate for authenticated users by User ID
+
+        # Specific, stricter rates for sensitive/resource-intensive actions
+        'login': '10/minute',       # Limit login attempts per IP or user
+        'registration': '20/hour',  # Limit registration attempts per IP
+        'comment': '100/hour',      # Limit comments per hour per user
+        'search': '60/minute',      # Limit search queries per user/IP
+        'upload': '30/day',         # Limit file uploads per user
+    }
 }
 
 SPECTACULAR_SETTINGS = {
